@@ -8,7 +8,7 @@ sys.path.insert(0, str(_ROOT))
 from openvino_face_db import FaceEmbeddingDB, OpenVINOFaceEmbedder  # noqa: E402
 
 
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser(description="Identify a face from a local DB (OpenVINO).")
     parser.add_argument("--image", required=True, help="Path to a cropped face image.")
     parser.add_argument("--db", default=str(_ROOT / "db"), help="DB folder path.")
@@ -43,7 +43,6 @@ def main() -> int:
     print(f"best_score={result.score:.6f}")
     print(f"threshold={args.threshold:.6f}")
     print(f"inference_time_s={res.inference_time_s:.6f}")
-    return 0 if result.passed else 2
 
 
 if __name__ == "__main__":
