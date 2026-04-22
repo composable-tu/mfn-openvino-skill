@@ -13,7 +13,7 @@ def main():
     parser.add_argument("--image", required=True, help="Path to a cropped face image.")
     parser.add_argument("--db", default=str(_ROOT / "db"), help="DB folder path.")
     parser.add_argument("--model", default=str(_ROOT / "model" / "openvino" / "model.xml"), help="OpenVINO IR model XML path.")
-    parser.add_argument("--device", default="CPU", help="OpenVINO device name (default CPU).")
+    parser.add_argument("--device", default="AUTO", help="OpenVINO device name (default CPU).")
     parser.add_argument("--threshold", type=float, default=0.35, help="Cosine similarity threshold.")
     parser.add_argument(
         "--face_detector_model",
