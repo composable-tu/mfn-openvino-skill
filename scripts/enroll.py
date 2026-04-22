@@ -8,7 +8,7 @@ sys.path.insert(0, str(_ROOT))
 from openvino_face_db import FaceEmbeddingDB, OpenVINOFaceEmbedder  # noqa: E402
 
 
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser(description="Enroll a face embedding into a local DB (OpenVINO).")
     parser.add_argument("--name", required=True, help="Person name / label to enroll.")
     parser.add_argument("--image", required=True, help="Path to a cropped face image.")
@@ -42,7 +42,6 @@ def main() -> int:
     print(f"embedding_dim={res.embedding.shape[0]}")
     print(f"inference_time_s={res.inference_time_s:.6f}")
     print(f"saved_embedding={out}")
-    return 0
 
 
 if __name__ == "__main__":
