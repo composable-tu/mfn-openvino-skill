@@ -15,9 +15,24 @@ def main() -> int:
     parser.add_argument("--db", default=str(_ROOT / "db"), help="DB folder path.")
     parser.add_argument("--model", default=str(_ROOT / "model" / "openvino" / "model.xml"), help="OpenVINO IR model XML path.")
     parser.add_argument("--device", default="CPU", help="OpenVINO device name (default CPU).")
+    parser.add_argument(
+        "--face_detector_model",
+        default=str(_ROOT / "model" / "mediapipe" / "blaze_face_short_range.tflite"),
+        help="MediaPipe FaceDetector TFLite 模型路径（用于检测/对齐裁剪到 112x112）。",
+    )
+    parser.add_argument(
+        "--no_align",
+        action="store_true",
+        help="关闭人脸检测/对齐裁剪；仅对整张图做 resize 到 112x112（要求输入已是对齐人脸图）。",
+    )
     args = parser.parse_args()
 
-    embedder = OpenVINOFaceEmbedder(model_xml=args.model, device=args.device)
+    embedder = OpenVINOFaceEmbedder(
+        model_xml=args.model,
+        device=args.device,
+        face_detector_model=None if args.no_align else args.face_detector_model,
+        align_before_embed=not args.no_align,
+    )
     res = embedder.embed_file(args.image)
 
     db = FaceEmbeddingDB(args.db)

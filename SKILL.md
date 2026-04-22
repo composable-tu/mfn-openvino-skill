@@ -14,8 +14,8 @@ description: 使用 OpenVINO IR 模型管理一个简单的人脸向量库。适
 
 ## 假设与限制
 
-- 输入图片应为**已裁剪的人脸图**（本子项目不做人脸检测/对齐）。
-- 模型输入为 RGB \(112x112\)，dtype 为 `uint8`（与原仓库 `test-openvino.py` 一致）。
+- 默认会在推理前先做**人脸检测 + 对齐裁剪到 112×112**（基于 MediaPipe FaceDetector 关键点估计仿射矩阵）。
+- 模型输入为 RGB \(112x112\)，dtype 为 `uint8`。
 - 输出向量会做 L2 归一化；相似度为余弦相似度（点积）。
 
 ## 快速开始
@@ -40,14 +40,14 @@ python openvino-face-skill/scripts/identify.py --image "path/to/unknown.png" --t
 
 当用户提出“存人脸向量 / 入库 / enroll”时：
 
-1. 获取或推断参数：`--name`、`--image`，可选 `--db`（默认 `openvino-face-skill/db`）、`--model`（默认 `openvino-face-skill/model/openvino/model.xml`）
+1. 获取或推断参数：`--name`、`--image`，可选 `--db`（默认 `openvino-face-skill/db`）、`--model`（默认 `openvino-face-skill/model/openvino/model.xml`）、`--face_detector_model`（默认 `openvino-face-skill/model/mediapipe/blaze_face_short_range.tflite`）
 2. 运行入库脚本并返回：
    - 保存路径（`.npy` 文件路径）
    - 向量维度
 
 当用户提出“判断是谁 / 识别 / identify / recognize”时：
 
-1. 获取或推断参数：`--image`，可选 `--db`、`--model`（默认 `openvino-face-skill/model/openvino/model.xml`）、以及合理的 `--threshold`（默认 `0.35`）
+1. 获取或推断参数：`--image`，可选 `--db`、`--model`（默认 `openvino-face-skill/model/openvino/model.xml`）、`--face_detector_model`（默认 `openvino-face-skill/model/mediapipe/blaze_face_short_range.tflite`）、以及合理的 `--threshold`（默认 `0.35`）
 2. 运行识别脚本并返回：
    - 最佳匹配人名
    - 相似度分数

@@ -8,13 +8,13 @@
 `pip` 安装依赖：
 
 ```Shell
-python -m pip install openvino opencv-python numpy
+python -m pip install openvino opencv-python numpy mediapipe
 ```
 
 如果你使用 `uv`：
 
 ```Shell
-uv add openvino opencv-python numpy
+uv add openvino opencv-python numpy mediapipe
 ```
 
 然后，把 OpenVINO IR 模型文件放到：
@@ -34,6 +34,13 @@ python openvino-face-skill/scripts/enroll.py --name "alice" --image img_1.png
 
 ```Shell
 python openvino-face-skill/scripts/identify.py --image img_1.png --threshold 0.35
+```
+
+如果你的输入图已经是对齐裁剪后的 112×112 人脸图，可加：
+
+```Shell
+python openvino-face-skill/scripts/enroll.py --name "alice" --image img_1.png --no_align
+python openvino-face-skill/scripts/identify.py --image img_1.png --no_align
 ```
 
 ## 向量库格式

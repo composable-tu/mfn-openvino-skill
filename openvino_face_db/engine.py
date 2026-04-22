@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 from openvino import Core
 
+from .align import MediaPipeFaceAligner
+
 
 @dataclass(frozen=True)
 class EmbedResult:
@@ -32,15 +34,38 @@ class OpenVINOFaceEmbedder:
     - output: embedding vector, later L2-normalized
     """
 
-    def __init__(self, model_xml: str, device: str = "CPU"):
+    def __init__(
+        self,
+        model_xml: str,
+        device: str = "CPU",
+        *,
+        face_detector_model: str | None = None,
+        align_before_embed: bool = True,
+        min_detection_confidence: float = 0.5,
+    ):
         self.model_xml = str(model_xml)
         self.device = device
+        self.align_before_embed = bool(align_before_embed)
+        self._aligner = (
+            MediaPipeFaceAligner(
+                detector_model_path=str(face_detector_model),
+                min_detection_confidence=min_detection_confidence,
+            )
+            if self.align_before_embed and face_detector_model is not None
+            else None
+        )
 
         core = Core()
         model = core.read_model(model=self.model_xml)
         self._compiled = core.compile_model(model=model, device_name=self.device)
 
     def embed_bgr(self, image_bgr: np.ndarray) -> EmbedResult:
+        if self.align_before_embed and self._aligner is not None:
+            aligned = self._aligner.align_bgr(image_bgr)
+            if aligned is None:
+                raise ValueError("未检测到人脸，无法对齐裁剪到 112x112。")
+            image_bgr = aligned
+
         input_data = _preprocess_rgb_112(image_bgr)
 
         start = time.time()
