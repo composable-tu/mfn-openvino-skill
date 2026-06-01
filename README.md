@@ -1,20 +1,28 @@
-# MobileFaceNet 人脸身份识别 OpenVINO Skill
+# 经 OpenVINO 优化的 MobileFaceNet 人脸身份识别 Skill
 
 > [!note]
 > 本项目需配套 [composable-tu/arcface-exp](https://github.com/composable-tu/arcface-exp) 项目中训练并经过 OpenVINO 导出的模型使用。
+> 
+> 项目自带模型基于 CASIA 人脸数据集训练到 ArcFace Loss 3.7，仅供演示使用，项目不对模型准确率做任何担保。
 
 ## 第一次使用？
+
+安装该 Skill：
+
+```Shell
+npx skills add composable-tu/mfn-openvino-skill
+```
 
 `pip` 安装依赖：
 
 ```Shell
-python -m pip install openvino opencv-python numpy mediapipe
+pip install numpy opencv-python openvino lancedb mediapipe pyarrow
 ```
 
 如果你使用 `uv`：
 
 ```Shell
-uv add openvino opencv-python numpy mediapipe
+uv add numpy opencv-python openvino lancedb mediapipe pyarrow
 ```
 
 然后，把 OpenVINO IR 模型文件放到：
@@ -30,22 +38,20 @@ uv add openvino opencv-python numpy mediapipe
 python openvino-face-skill/scripts/enroll.py --name "alice" --image img_1.png
 ```
 
+如果你使用 Astral uv：
+
+```bash
+uv run openvino-face-skill/scripts/enroll.py --name "alice" --image img_1.png
+```
+
 ### 人脸识别
 
 ```Shell
 python openvino-face-skill/scripts/identify.py --image img_1.png --threshold 0.35
 ```
 
-如果你的输入图已经是对齐裁剪后的 112×112 人脸图，可加：
+如果使用 Astral uv：
 
-```Shell
-python openvino-face-skill/scripts/enroll.py --name "alice" --image img_1.png --no_align
-python openvino-face-skill/scripts/identify.py --image img_1.png --no_align
+```bash
+uv run openvino-face-skill/scripts/identify.py --image img_1.png --threshold 0.35
 ```
-
-## 向量库格式
-
-- 向量库目录包含：
-  - `index.json`：入库记录列表（人名 + embedding 文件相对路径）
-  - `embeddings/*.npy`：L2 归一化后的 embedding 向量
-

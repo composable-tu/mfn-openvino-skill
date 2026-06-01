@@ -1,5 +1,5 @@
 ---
-name: openvino-face-db
+name: mfn-openvino-skill
 description: 使用 OpenVINO IR 模型管理一个简单的人脸向量库。适用于“根据图片入库保存人脸向量/根据图片在已入库向量中识别是谁”等需求（OpenVINO 推理 + 余弦相似度比对）。
 ---
 
@@ -21,6 +21,8 @@ description: 使用 OpenVINO IR 模型管理一个简单的人脸向量库。适
 ## 快速开始
 
 ### 安装依赖
+
+`pip` 安装依赖：
 
 ```bash
 pip install numpy opencv-python openvino lancedb mediapipe pyarrow
