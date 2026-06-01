@@ -4,7 +4,7 @@ __pycache__/
 .venv/
 
 # OpenVINO IR weights (often large/binary)
-model/openvino/**
+# model/openvino/**
 
 .idea
 
