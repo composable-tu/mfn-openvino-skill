@@ -2,10 +2,13 @@
 name = "openvino-face-skill"
 version = "0.1.0"
 description = "Standalone OpenVINO face embedding DB (enroll + identify)."
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.24",
   "opencv-python>=4.8",
   "openvino>=2025.1.0",
+  "lancedb>=0.9.0",
+  "mediapipe>=0.10.35",
+  "pyarrow>=24.0.0",
 ]
 

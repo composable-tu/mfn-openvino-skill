@@ -1,9 +1,11 @@
-import json
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
+import lancedb
+import pyarrow as pa
 
 
 @dataclass(frozen=True)
@@ -13,90 +15,88 @@ class IdentifyResult:
     passed: bool
 
 
-def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-    a = np.asarray(a, dtype=np.float32).reshape(-1)
-    b = np.asarray(b, dtype=np.float32).reshape(-1)
-    if a.shape != b.shape:
-        raise ValueError(f"embedding shape mismatch: {a.shape} vs {b.shape}")
-    return float(np.dot(a, b))
-
-
 class FaceEmbeddingDB:
     def __init__(self, db_dir: str):
         self.db_dir = Path(db_dir)
-        self.emb_dir = self.db_dir / "embeddings"
-        self.index_path = self.db_dir / "index.json"
-
         self.db_dir.mkdir(parents=True, exist_ok=True)
-        self.emb_dir.mkdir(parents=True, exist_ok=True)
 
-    def _load_index(self) -> List[Dict[str, str]]:
-        if not self.index_path.exists():
-            return []
-        return json.loads(self.index_path.read_text(encoding="utf-8"))
+        # 初始化 LanceDB 连接
+        self._db = lancedb.connect(str(self.db_dir))
 
-    def _save_index(self, entries: List[Dict[str, str]]) -> None:
-        self.index_path.write_text(
-            json.dumps(entries, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        # 创建或打开表
+        self._table_name = "face_embeddings"
+        if self._table_name in self._db.table_names():
+            self._table = self._db.open_table(self._table_name)
+        else:
+            # 创建新表，schema: id (str), name (str), vector (array<float>)
+            schema = pa.schema([
+                pa.field("id", pa.string()),
+                pa.field("name", pa.string()),
+                pa.field("vector", pa.list_(pa.float32(), 512)),
+            ])
+            self._table = self._db.create_table(
+                self._table_name,
+                schema=schema
+            )
 
-    def enroll(self, name: str, embedding: np.ndarray) -> Path:
+
+
+    def enroll(self, name: str, embedding: np.ndarray) -> str:
         if not name or not name.strip():
             raise ValueError("name 不能为空")
         name = name.strip()
 
         emb = np.asarray(embedding, dtype=np.float32).reshape(-1)
-        # assume already normalized, but keep it safe
+        # L2 归一化
         emb = emb / (float(np.linalg.norm(emb)) + 1e-10)
 
-        safe = "".join(c for c in name if c.isalnum() or c in ("-", "_")).strip("_-")
-        if not safe:
-            safe = "person"
-
-        existing = self._load_index()
-        next_id = 1
-        for e in existing:
-            try:
-                next_id = max(next_id, int(e.get("id", "0")) + 1)
-            except Exception:
-                continue
-
-        out_path = self.emb_dir / f"{safe}_{next_id}.npy"
-        np.save(str(out_path), emb)
-
-        existing.append({"id": str(next_id), "name": name, "path": str(out_path.relative_to(self.db_dir))})
-        self._save_index(existing)
-        return out_path
+        # 生成唯一 ID
+        entry_id = str(uuid.uuid4())
+        
+        # 插入到 LanceDB
+        self._table.add([
+            {
+                "id": entry_id,
+                "name": name,
+                "vector": emb.tolist(),
+            }
+        ])
+        
+        return entry_id
 
     def list_people(self) -> List[str]:
-        entries = self._load_index()
-        return sorted({e["name"] for e in entries if "name" in e})
+        # 从 LanceDB 表中查询所有不重复的 name
+        result = self._table.to_pandas()["name"].unique().tolist()
+        return sorted(result)
 
     def identify(self, embedding: np.ndarray, threshold: float = 0.35) -> IdentifyResult:
         emb = np.asarray(embedding, dtype=np.float32).reshape(-1)
         emb = emb / (float(np.linalg.norm(emb)) + 1e-10)
 
-        entries = self._load_index()
-        if not entries:
+        # 检查表是否为空
+        if len(self._table) == 0:
             return IdentifyResult(name=None, score=float("-inf"), passed=False)
 
-        best_name: Optional[str] = None
-        best_score = float("-inf")
-
-        for e in entries:
-            rel = e.get("path")
-            if not rel:
-                continue
-            p = self.db_dir / rel
-            if not p.exists():
-                continue
-            vec = np.load(str(p)).astype(np.float32).reshape(-1)
-            score = _cosine_similarity(emb, vec)
-            if score > best_score:
-                best_score = score
-                best_name = e.get("name")
-
-        passed = best_name is not None and best_score >= float(threshold)
-        return IdentifyResult(name=best_name if passed else None, score=best_score, passed=passed)
+        # 使用 LanceDB 的向量搜索功能
+        results = self._table.search(emb.tolist()).limit(1).to_list()
+        
+        if not results:
+            return IdentifyResult(name=None, score=float("-inf"), passed=False)
+        
+        best_match = results[0]
+        best_score = float(best_match["_distance"])  # LanceDB 返回的是距离，不是相似度
+        best_name = best_match.get("name")
+        
+        # LanceDB 默认使用 L2 距离，需要转换为相似度分数
+        # 对于归一化向量，cosine_similarity = 1 - (l2_distance^2 / 2)
+        # 但这里我们直接使用距离作为分数（越小越相似）
+        # 为了保持接口一致性，我们将距离转换为相似度
+        cosine_sim = 1.0 - (best_score * best_score / 2.0)
+        
+        passed = best_name is not None and cosine_sim >= float(threshold)
+        return IdentifyResult(
+            name=best_name if passed else None,
+            score=cosine_sim,
+            passed=passed
+        )
 

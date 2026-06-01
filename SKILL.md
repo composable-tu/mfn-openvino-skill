@@ -20,6 +20,18 @@ description: 使用 OpenVINO IR 模型管理一个简单的人脸向量库。适
 
 ## 快速开始
 
+### 安装依赖
+
+```bash
+pip install numpy opencv-python openvino lancedb mediapipe pyarrow
+```
+
+如果你使用 Astral uv：
+
+```bash
+uv add numpy opencv-python openvino lancedb mediapipe pyarrow
+```
+
 ### 入库一个人
 
 运行：
@@ -28,12 +40,24 @@ description: 使用 OpenVINO IR 模型管理一个简单的人脸向量库。适
 python openvino-face-skill/scripts/enroll.py --name "alice" --image "path/to/alice.png"
 ```
 
+如果你使用 Astral uv：
+
+```bash
+uv run openvino-face-skill/scripts/enroll.py --name "alice" --image "path/to/alice.png"
+```
+
 ### 识别一个人
 
 运行：
 
 ```bash
 python openvino-face-skill/scripts/identify.py --image "path/to/unknown.png" --threshold 0.35
+```
+
+如果使用 Astral uv：
+
+```bash
+uv run openvino-face-skill/scripts/identify.py --image "path/to/unknown.png" --threshold 0.35
 ```
 
 ## 使用指引（给 Agent 的操作提示词）

@@ -6,3 +6,5 @@ __pycache__/
 # OpenVINO IR weights (often large/binary)
 model/openvino/**
 
+.idea
+

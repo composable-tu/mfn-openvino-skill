@@ -36,12 +36,12 @@ def main():
     res = embedder.embed_file(args.image)
 
     db = FaceEmbeddingDB(args.db)
-    out = db.enroll(name=args.name, embedding=res.embedding)
+    entry_id = db.enroll(name=args.name, embedding=res.embedding)
 
     print(f"enrolled_name={args.name}")
     print(f"embedding_dim={res.embedding.shape[0]}")
     print(f"inference_time_s={res.inference_time_s:.6f}")
-    print(f"saved_embedding={out}")
+    print(f"entry_id={entry_id}")
 
 
 if __name__ == "__main__":
