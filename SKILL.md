@@ -68,7 +68,7 @@ uv run openvino-face-skill/scripts/identify.py --image "path/to/unknown.png" --t
 
 1. 获取或推断参数：`--name`、`--image`，可选 `--db`（默认 `openvino-face-skill/db`）、`--model`（默认 `openvino-face-skill/model/openvino/model.xml`）、`--face_detector_model`（默认 `openvino-face-skill/model/mediapipe/blaze_face_short_range.tflite`）
 2. 运行入库脚本并返回：
-   - 保存路径（`.npy` 文件路径）
+   - 保存路径（LanceDB 文件路径）
    - 向量维度
 
 当用户提出“判断是谁 / 识别 / identify / recognize”时：
